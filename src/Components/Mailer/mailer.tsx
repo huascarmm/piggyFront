@@ -1,4 +1,6 @@
-import { Form, Input, Button } from 'antd';
+import { Form, Input, Button } from "antd";
+import { connect } from "react-redux";
+import Api from "../../Redux/sagas/api";
 
 const layout = {
   labelCol: { span: 8 },
@@ -6,27 +8,55 @@ const layout = {
 };
 
 const validateMessages = {
-  required: '${label} is required!',
+  required: "${label} is required!",
   types: {
-    email: '${label} is not a valid email!',
-    number: '${label} is not a valid number!',
-  }
+    email: "${label} is not a valid email!",
+    number: "${label} is not a valid number!",
+  },
 };
 
-const Mailer = () => {
+interface IProps {
+  handleSuccess?: any;
+  handleFail?: any;
+}
+
+const Mailer: React.FC<IProps> = ({ handleSuccess, handleFail }) => {
   const onFinish = (values: any) => {
-    console.log('Sended', values);
+    Api.post(
+      "https://boiling-scrubland-89598.herokuapp.com/email/send",
+      values.user
+    )
+      .then((res: any) => {
+        console.log("res of mailer", res);
+        handleSuccess();
+      })
+      .catch((err: any) => {
+        handleFail();
+      });
   };
 
   return (
-    <Form {...layout} name="nest-messages" onFinish={onFinish} validateMessages={validateMessages}>
-      <Form.Item name={['user', 'subject']} label="Subject" rules={[{ required: true }]}>
+    <Form
+      {...layout}
+      name="nest-messages"
+      onFinish={onFinish}
+      validateMessages={validateMessages}
+    >
+      <Form.Item
+        name={["user", "name"]}
+        label="Subject"
+        rules={[{ required: true }]}
+      >
         <Input />
       </Form.Item>
-      <Form.Item name={['user', 'email']} label="Email" rules={[{ type: 'email' }]}>
+      <Form.Item
+        name={["user", "email"]}
+        label="Email"
+        rules={[{ type: "email" }]}
+      >
         <Input />
       </Form.Item>
-      <Form.Item name={['user', 'message']} label="Message">
+      <Form.Item name={["user", "message"]} label="Message">
         <Input.TextArea />
       </Form.Item>
       <Form.Item wrapperCol={{ ...layout.wrapperCol, offset: 8 }}>
@@ -38,4 +68,17 @@ const Mailer = () => {
   );
 };
 
-export default Mailer;
+const mapStateToProps = (result: number) => {
+  return {
+    result,
+  };
+};
+
+const mapDispatchToProps = (dispatch: any) => {
+  return {
+    handleSuccess: () => dispatch({ type: "SUCCESS" }),
+    handleFail: () => dispatch({ type: "FAIL" }),
+  };
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(Mailer);
